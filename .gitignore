@@ -1,0 +1,19 @@
+# Editors
+.kate-swp
+# Kdev
+xc_exam.kdev4
+.kdev4
+compile_commands.json
+build/
+
+# Distribution / packaging
+dist/
+*.egg-info/
+
+# Output
+interval_counter/interval_counter
+obj/
+bin/
+
+# Misc
+.ccls-cache/
