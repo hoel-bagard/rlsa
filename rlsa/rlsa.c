@@ -39,7 +39,7 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
     import_umath();
 
     printf("1\n");
-    if (!PyArg_ParseTuple(args, "iii", &arg1, &vsv, hsv))
+    if (!PyArg_ParseTuple(args, "Oii", &arg1, &vsv, &hsv))
       return NULL;
     printf("2\n");
 
