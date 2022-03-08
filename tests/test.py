@@ -5,9 +5,9 @@ from rlsa import rlsa
 def main():
     print("Start")
 
-    inputs = np.linspace(0, 1, 5)
-    outputs = rlsa(inputs)
-    print(f"{inputs=}, {outputs=}")
+    inputs = np.array([[1, 2], [3, 4]], dtype=np.uint8)
+    outputs = rlsa(inputs, 3, 4)
+    print(f"Inputs:\n{inputs}\nOutputs:\n{outputs}")
 
 
 if __name__ == "__main__":

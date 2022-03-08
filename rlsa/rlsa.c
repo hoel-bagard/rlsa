@@ -4,6 +4,7 @@
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_3kcompat.h"
 #include <math.h>
+#include <stdio.h>
 
 
 static void rlsa(char **args, npy_intp *dimensions, npy_intp* steps, void* data) {
@@ -11,6 +12,9 @@ static void rlsa(char **args, npy_intp *dimensions, npy_intp* steps, void* data)
   npy_intp n = dimensions[0];
   char *in = args[0], *out = args[1];
   npy_intp in_step = steps[0], out_step = steps[1];
+
+  int a = dimensions[0];
+  printf("n: %d\n", a);
 
   double tmp;
 
@@ -26,41 +30,77 @@ static void rlsa(char **args, npy_intp *dimensions, npy_intp* steps, void* data)
   }
 }
 
+static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
+    PyObject *arg1=NULL, *out=NULL;
+    PyObject *arr1=NULL, *oarr=NULL;
+    int vsv, hsv;
+
+    import_array();
+    import_umath();
+
+    printf("1\n");
+    if (!PyArg_ParseTuple(args, "iii", &arg1, &vsv, hsv))
+      return NULL;
+    printf("2\n");
+
+    arr1 = PyArray_FROM_OTF(arg1, NPY_UINT8, NPY_ARRAY_IN_ARRAY);
+    if (arr1 == NULL) return NULL;
+#if NPY_API_VERSION >= 0x0000000c
+    oarr = PyArray_FROM_OTF(out, NPY_UINT8, NPY_ARRAY_INOUT_ARRAY2);
+#else
+    oarr = PyArray_FROM_OTF(out, NPY_UINT8, NPY_ARRAY_INOUT_ARRAY);
+#endif
+    if (oarr == NULL) goto fail;
+
+    int nd = PyArray_NDIM(arr1);
+    printf("nd: %d", nd);
+
+    /* code that makes use of arguments */
+    /* You will probably need at least
+       nd = PyArray_NDIM(<..>)    -- number of dimensions
+       dims = PyArray_DIMS(<..>)  -- npy_intp array of length nd
+                                     showing length in each dim.
+       dptr = (double *)PyArray_DATA(<..>) -- pointer to data.
+
+       If an error occurs goto fail.
+     */
+
+    Py_DECREF(arr1);
+#if NPY_API_VERSION >= 0x0000000c
+    PyArray_ResolveWritebackIfCopy(oarr);
+#endif
+    Py_DECREF(oarr);
+    Py_INCREF(Py_None);
+    return Py_None;
+
+ fail:
+    Py_XDECREF(arr1);
+#if NPY_API_VERSION >= 0x0000000c
+    PyArray_DiscardWritebackIfCopy(oarr);
+#endif
+    Py_XDECREF(oarr);
+    return NULL;
+}
+
+
+
+
 static PyMethodDef RLSAMethods[] = {
-  {NULL, NULL, 0, NULL}
+  {"rlsa",  rlsa_wrapper, METH_VARARGS, "Run Length Smoothing Algorithm."},
+  {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
 
-
-PyUFuncGenericFunction funcs[1] = {&rlsa};  /*This a pointer to the above function*/
-static void *data[1] = {NULL};
-static char types[2] = {NPY_DOUBLE, NPY_DOUBLE};  /* These are the input and return dtypes of the function.*/
-
-static struct PyModuleDef moduledef = {
+static struct PyModuleDef rlsa_module = {
   PyModuleDef_HEAD_INIT,
-  "rlsa", /* name of module */
-  NULL,   /* module documentation, may be NULL */
-  -1,     /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+  "rlsa",   /* name of module */
+  NULL, /* module documentation, may be NULL */
+  -1,       /* size of per-interpreter state of the module,
+               or -1 if the module keeps state in global variables. */
   RLSAMethods
 };
 
+
 PyMODINIT_FUNC PyInit_rlsa(void) {
-  PyObject *m, *rlsa, *d;
-  m = PyModule_Create(&moduledef);
-  if (!m)
-    return NULL;
-
-  import_array();
-  import_umath();
-
-  rlsa = PyUFunc_FromFuncAndData(funcs, data, types, 1, 1, 1,
-                                 PyUFunc_None, "rlsa",
-                                 "Run Length Smoothing Algorithm", 0);
-
-  d = PyModule_GetDict(m);
-
-  PyDict_SetItemString(d, "rlsa", rlsa);
-  Py_DECREF(rlsa);
-
-  return m;
+  return PyModule_Create(&rlsa_module);
 }
