@@ -7,36 +7,75 @@
 #include <stdio.h>
 
 
-static void rlsa(char **args, npy_intp *dimensions, npy_intp* steps, void* data) {
-  npy_intp i;
-  npy_intp n = dimensions[0];
-  char *in = args[0], *out = args[1];
-  npy_intp in_step = steps[0], out_step = steps[1];
+/**
+ * Apply the RLS algorithm horizontally on the given image.
+ * This function eliminates horizontal white runs whose lengths are smaller than the given value.
+ *
+ * Note: This function can be used to do the operation vertically by simply passing the transpose.
+ *
+ * Args:
+ *     img:
+ *     dims: Number of rows and columns in the image.
+ *     value:
+ *
+ * Returns:
+ *    An int array, the resulting image.
+ */
+static int* rlsa(int* in_img, npy_intp* dims, int value) {  // _horizontal
+  long int rows = dims[0];
+  long int cols = dims[1];
+  int out_img[rows * cols];
+  memcpy(out_img, in_img, sizeof(out_img));
 
-  int a = dimensions[0];
-  printf("n: %d\n", a);
+  /* for(int i = 0; i < rows; i++) { */
+  /*   for(int j = 0; j < cols; j++) { */
+  /*     if (in_img[i*cols + j] != out_img[i*cols + j]) { */
+  /*       printf("In: %d\n", in_img[i*cols + j]); */
+  /*       printf("Out: %d\n", out_img[i*cols + j]); */
+  /*     } */
+  /*   } */
+  /* } */
 
-  double tmp;
-
-  for (i = 0; i < n; i++) {
-    /*BEGIN main ufunc computation*/
-    tmp = *(double *)in;
-    tmp /= 1-tmp;
-    *((double *)out) = log(tmp);
-    /*END main ufunc computation*/
-
-    in += in_step;
-    out += out_step;
+  for(int i = 0; i < rows; i++) {
+    int count = 0;  // Index of the last 0 found
+    for(int j = 0; j < cols; j++) {
+      if (out_img[i*cols + j] == 0) {
+        if (j-count <= value)
+          for(int k = count; k < j; k++)
+            out_img[i*cols + k] = 0;
+        count = j;
+      }
+    }
   }
+  return out_img;
 }
+
+
+/* def rlsa(img: np.ndarray, value_horizontal: int, value_vertical: int, ahsv: Optional[int] = None) -> np.ndarray: */
+/* """Run Length Smoothing Algorithm. */
+
+/*   Args: */
+/* img (np.ndarray): The image to process. */
+/*   value_horizontal (int): The horizontal threshold (hsv=300 in the paper) */
+/*   value_vertical (int): The vertical threshold (vsv=500 in the paper) */
+
+/*   Returns: */
+/* The resulting image. */
+/*   """ */
+/*   horizontal_rlsa = rlsa_horizontal(img, value_horizontal) */
+/*   vertical_rlsa = rlsa_horizontal(img.T, value_vertical).T */
+/*   combined_result = cv2.bitwise_and(horizontal_rlsa, vertical_rlsa) */
+/*   rlsa_result = rlsa_horizontal(combined_result, ahsv if ahsv else value_horizontal // 10) */
+/*                                                                       return rlsa_result */
+
+
+
 
 static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
   int debug = 1;
   PyArrayObject* in_img = NULL;
-  int* out_data = NULL;
-
-  /* PyObject *out=NULL, *oarr=NULL; */
   int vsv, hsv;
+  int* out_data = NULL;
 
   import_array();
   import_umath();
@@ -56,9 +95,11 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
     printf("First int is %d\n", in_data[0]);
   }
 
-  out_data = in_data;
+  /* out_data = in_data; */
+  out_data = rlsa(in_data, dims, hsv);
+  printf("AAAAAAAA %d", out_data[0]);
   // create a python numpy array from the out array
-  PyArrayObject* output = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_UINT8, (void*)out_data);
+  PyArrayObject* output = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_INT32, (void*)out_data);  // TODO: Should be UINT8, but not working. byte ?
   return PyArray_Return(output);
 
   /* If an error occurs goto fail. */
