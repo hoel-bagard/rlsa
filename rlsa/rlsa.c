@@ -1,43 +1,66 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include "numpy/ndarraytypes.h"
+#include "numpy/ufuncobject.h"
+#include "numpy/npy_3kcompat.h"
+#include <math.h>
 
 
-int interval_counter(int start, int end) {
-  int sum = 0;
-  for (int i = start; i < end; i++) sum++;  // For loop to be able to time it
-  return sum;
+static void rlsa(char **args, npy_intp *dimensions, npy_intp* steps, void* data) {
+  npy_intp i;
+  npy_intp n = dimensions[0];
+  char *in = args[0], *out = args[1];
+  npy_intp in_step = steps[0], out_step = steps[1];
+
+  double tmp;
+
+  for (i = 0; i < n; i++) {
+    /*BEGIN main ufunc computation*/
+    tmp = *(double *)in;
+    tmp /= 1-tmp;
+    *((double *)out) = log(tmp);
+    /*END main ufunc computation*/
+
+    in += in_step;
+    out += out_step;
+  }
 }
 
+static PyMethodDef RLSAMethods[] = {
+  {NULL, NULL, 0, NULL}
+};
 
-static PyObject *interval_counter_wrapper(PyObject *self, PyObject *args) {
-  int start, end;
-  int sum;
 
-  if (!PyArg_ParseTuple(args, "ii", &start, &end))
+
+PyUFuncGenericFunction funcs[1] = {&rlsa};  /*This a pointer to the above function*/
+static void *data[1] = {NULL};
+static char types[2] = {NPY_DOUBLE, NPY_DOUBLE};  /* These are the input and return dtypes of the function.*/
+
+static struct PyModuleDef moduledef = {
+  PyModuleDef_HEAD_INIT,
+  "rlsa", /* name of module */
+  NULL,   /* module documentation, may be NULL */
+  -1,     /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+  RLSAMethods
+};
+
+PyMODINIT_FUNC PyInit_rlsa(void) {
+  PyObject *m, *rlsa, *d;
+  m = PyModule_Create(&moduledef);
+  if (!m)
     return NULL;
 
-  sum = interval_counter(start, end);
+  import_array();
+  import_umath();
 
-  return PyLong_FromLong(sum);
-}
+  rlsa = PyUFunc_FromFuncAndData(funcs, data, types, 1, 1, 1,
+                                 PyUFunc_None, "rlsa",
+                                 "Run Length Smoothing Algorithm", 0);
 
+  d = PyModule_GetDict(m);
 
-static PyMethodDef CounterMethods[] = {
-  {"interval_counter",  interval_counter_wrapper, METH_VARARGS, "Returns number of numbers in the interval."},
-  {NULL, NULL, 0, NULL}        /* Sentinel */
-};
+  PyDict_SetItemString(d, "rlsa", rlsa);
+  Py_DECREF(rlsa);
 
-
-static struct PyModuleDef mycounter_module = {
-  PyModuleDef_HEAD_INIT,
-  "mycounter",   /* name of module */
-  NULL, /* module documentation, may be NULL */
-  -1,       /* size of per-interpreter state of the module,
-               or -1 if the module keeps state in global variables. */
-  CounterMethods
-};
-
-
-PyMODINIT_FUNC PyInit_mycounter(void) {
-    return PyModule_Create(&mycounter_module);
+  return m;
 }

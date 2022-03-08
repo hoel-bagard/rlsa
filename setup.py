@@ -1,8 +1,12 @@
-from distutils.core import Extension, setup
+def configuration(parent_package='', top_path=None):
+    from numpy.distutils.misc_util import Configuration
 
-rlsa_module = Extension("rlsa", sources=["rlsa/rlsa.c"])
+    config = Configuration()
+    config.add_extension("rlsa", ["rlsa/rlsa.c"])
 
-setup(name="rlsa",
-      version="0.1",
-      description="RLSA package",
-      ext_modules=[rlsa_module])
+    return config
+
+
+if __name__ == "__main__":
+    from numpy.distutils.core import setup
+    setup(configuration=configuration)
