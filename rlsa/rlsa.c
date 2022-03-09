@@ -5,7 +5,6 @@
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_3kcompat.h"
 #include <math.h>
-#include <stdio.h>
 
 /**
  * Apply the RLS algorithm horizontally on the given image.
@@ -71,8 +70,6 @@ static void rlsa(uint8_t* img, npy_intp* dims, int hsv, int vsv) {
 
 
 static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
-  int debug = 0;
-
   import_array();
   import_umath();
 
@@ -87,11 +84,6 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
   int nb_dims = PyArray_NDIM(in_img);  // number of dimensions
   npy_intp* dims = PyArray_DIMS(in_img);  // npy_intp array of length nb_dims showing length in each dim.
   uint8_t* in_data = (uint8_t*)PyArray_DATA(in_img);  // Pointer to data.
-  if (debug) {
-    printf("Received array with %d dimensions\n", nb_dims);
-    printf("First dimension has %ld elements, second one has %ld elements\n", dims[0], dims[1]);
-    printf("First int is %d\n", in_data[0]);
-  }
 
   // Copy the input image data to an output image (that we will modify from now on).
   // uint8_t* out_data = (uint8_t*)malloc(dims[0] * dims[1] * sizeof(uint8_t));
