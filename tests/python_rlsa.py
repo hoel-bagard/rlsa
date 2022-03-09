@@ -25,7 +25,7 @@ def rlsa_horizontal(img: npt.NDArray[np.uint8], value: int) -> npt.NDArray[np.ui
         count = 0  # Index of the last 0 found
         for col in range(cols):
             if img[row, col] == 0:
-                if (col-count) <= value:
+                if (col-count) <= value and value != 0:
                     img[row, count:col] = 0
                 count = col
     return img

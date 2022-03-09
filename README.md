@@ -1,11 +1,17 @@
 # RLSA
-C implementation of RLSA for use in python.
+C implementation of [RLSA](https://users.iit.demokritos.gr/~bgat/RLSA_values.pdf) for use in python.
 
 ## Usage
 First create a virtualenv and enter it. Then:
 ```
 python setup.py install && python tests/test.py
 ```
+
+### Test
+```
+python -m tests.test assets/rlsa_test_image.jpg
+```
+
 ### Benchmark
 ```
 python -m tests.benchmark assets/rlsa_test_image.jpg

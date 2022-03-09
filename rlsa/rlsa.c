@@ -15,10 +15,7 @@
  *     dims: Number of rows and columns in the image.
  *     hsv: The treshold smoothing value.
  */
-static void rlsa_horizontal(uint8_t* img, npy_intp* dims, int hsv) {
-  long int rows = dims[0];
-  long int cols = dims[1];
-
+static void rlsa_horizontal(uint8_t* img, long int rows, long int cols, int hsv) {
   for(int i = 0; i < rows; i++) {
     int count = 0;  // Index of the last 0 found
     for(int j = 0; j < cols; j++) {
@@ -35,10 +32,7 @@ static void rlsa_horizontal(uint8_t* img, npy_intp* dims, int hsv) {
 /**
  * Same as above, but vertically.
  */
-static void rlsa_vertical(uint8_t* img, npy_intp* dims, int vsv) {
-  long int rows = dims[0];
-  long int cols = dims[1];
-
+static void rlsa_vertical(uint8_t* img, long int rows, long int cols, int vsv) {
   for(int j = 0; j < cols; j++) {
     int count = 0;
     for(int i = 0; i < rows; i++)
@@ -62,10 +56,22 @@ static void rlsa_vertical(uint8_t* img, npy_intp* dims, int vsv) {
  */
 
 static void rlsa(uint8_t* img, npy_intp* dims, int hsv, int vsv) {
+  long int rows = dims[0];
+  long int cols = dims[1];
   int ahsv = hsv / 10;  // TODO: Is it possible to have it as an optional arg ?
-  rlsa_horizontal(img, dims, hsv);
-  rlsa_vertical(img, dims, vsv);
-  rlsa_horizontal(img, dims, ahsv);
+
+  uint8_t horizontal_rlsa_img[rows * cols];
+  memcpy(horizontal_rlsa_img, img, sizeof(horizontal_rlsa_img));
+  rlsa_horizontal(horizontal_rlsa_img, rows, cols, hsv);
+  rlsa_vertical(img, rows, cols, vsv);
+
+  // And operation between the vetical and horizontal results.
+  for(int i = 0; i < rows; i++)
+    for(int j = 0; j < cols; j++)
+      if (img[i*cols + j] == 0 || horizontal_rlsa_img[i*cols + j] == 0)
+        img[i*cols + j] = 0;
+
+  rlsa_horizontal(img, rows, cols, ahsv);
 }
 
 
@@ -81,7 +87,7 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
 
   in_img = (PyArrayObject*) PyArray_Cast(in_img, NPY_UINT8);
 
-  int nb_dims = PyArray_NDIM(in_img);  // number of dimensions
+  /* int nb_dims = PyArray_NDIM(in_img);  // number of dimensions */
   npy_intp* dims = PyArray_DIMS(in_img);  // npy_intp array of length nb_dims showing length in each dim.
   uint8_t* in_data = (uint8_t*)PyArray_DATA(in_img);  // Pointer to data.
 
