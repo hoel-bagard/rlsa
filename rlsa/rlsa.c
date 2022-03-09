@@ -94,24 +94,18 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
   }
 
   // Copy the input image data to an output image (that we will modify from now on).
-  uint8_t* out_data = (uint8_t*)malloc(dims[0] * dims[1] * sizeof(uint8_t));  // Needs to be a malloc to keep the data when returning the array to python
+  // uint8_t* out_data = (uint8_t*)malloc(dims[0] * dims[1] * sizeof(uint8_t));
+  uint8_t out_data[dims[0] * dims[1]];
   memcpy(out_data, in_data, dims[0] * dims[1] * sizeof(uint8_t));
 
   rlsa(out_data, dims, hsv, vsv);
 
   // create a python numpy array from the out array
   PyArrayObject* out_img = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_UINT8, out_data);
+
+  Py_DECREF(in_img);  // TODO: should it be done for vsv and hsv too ?
+
   return PyArray_Return(out_img);
-
-  /* If an error occurs goto fail. */
-
-  /* Py_DECREF(arr); */
-  /* Py_INCREF(Py_None); */
-  /* return Py_None; */
-
- /* fail: */
- /*  Py_XDECREF(arr); */
- /*  return NULL; */
 }
 
 
