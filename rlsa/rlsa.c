@@ -1,11 +1,11 @@
 #define PY_SSIZE_T_CLEAN
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_3kcompat.h"
 #include <math.h>
 #include <stdio.h>
-
 
 /**
  * Apply the RLS algorithm horizontally on the given image.
@@ -16,7 +16,7 @@
  *     dims: Number of rows and columns in the image.
  *     value:
  */
-static void rlsa_horizontal(int* img, npy_intp* dims, int value) {
+static void rlsa_horizontal(uint8_t* img, npy_intp* dims, int value) {
   long int rows = dims[0];
   long int cols = dims[1];
 
@@ -36,7 +36,7 @@ static void rlsa_horizontal(int* img, npy_intp* dims, int value) {
 /**
  * Same as above, but vertically.
  */
-static void rlsa_vertical(int* img, npy_intp* dims, int value) {
+static void rlsa_vertical(uint8_t* img, npy_intp* dims, int value) {
   long int rows = dims[0];
   long int cols = dims[1];
 
@@ -53,8 +53,8 @@ static void rlsa_vertical(int* img, npy_intp* dims, int value) {
 }
 
 
-static void rlsa(int* img, npy_intp* dims, int hsv, int vsv) {
-  int ahsv = hsv / 2;
+static void rlsa(uint8_t* img, npy_intp* dims, int hsv, int vsv) {
+  int ahsv = hsv / 2;  // TODO: Is it possible to have it as an optional arg ?
   rlsa_horizontal(img, dims, hsv);
   rlsa_vertical(img, dims, vsv);
   rlsa_horizontal(img, dims, ahsv);
@@ -81,7 +81,7 @@ static void rlsa(int* img, npy_intp* dims, int hsv, int vsv) {
 
 
 static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
-  int debug = 1;
+  int debug = 0;
 
   import_array();
   import_umath();
@@ -92,12 +92,11 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "Oii", &in_img, &vsv, &hsv))
     return NULL;
 
-  // Needs to be int32 (even if the image is in uint8), because (I think) C ints are usually 32bits nowadays.
-  in_img = (PyArrayObject*) PyArray_Cast(in_img, NPY_INT32);
+  in_img = (PyArrayObject*) PyArray_Cast(in_img, NPY_UINT8);
 
   int nb_dims = PyArray_NDIM(in_img);  // number of dimensions
   npy_intp* dims = PyArray_DIMS(in_img);  // npy_intp array of length nb_dims showing length in each dim.
-  int* in_data = (int*)PyArray_DATA(in_img);  // Pointer to data.
+  uint8_t* in_data = (uint8_t*)PyArray_DATA(in_img);  // Pointer to data.
   if (debug) {
     printf("Received array with %d dimensions\n", nb_dims);
     printf("First dimension has %ld elements, second one has %ld elements\n", dims[0], dims[1]);
@@ -105,14 +104,13 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
   }
 
   // Copy the input image data to an output image (that we will modify from now on).
-  int* out_data = (int*)malloc(dims[0] * dims[1] * sizeof(int));  // Needs to be a malloc to keep the data when returning the array to python
-  memcpy(out_data, in_data, dims[0] * dims[1] * sizeof(int));
+  uint8_t* out_data = (uint8_t*)malloc(dims[0] * dims[1] * sizeof(uint8_t));  // Needs to be a malloc to keep the data when returning the array to python
+  memcpy(out_data, in_data, dims[0] * dims[1] * sizeof(uint8_t));
 
   rlsa(out_data, dims, hsv, vsv);
 
   // create a python numpy array from the out array
-  PyArrayObject* out_img = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_INT32, out_data);
-  out_img = (PyArrayObject*) PyArray_Cast(out_img, NPY_UINT8);
+  PyArrayObject* out_img = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_UINT8, out_data);
   return PyArray_Return(out_img);
 
   /* If an error occurs goto fail. */

@@ -33,9 +33,10 @@ def main():
     img_path = args.img_path
 
     img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-    _, binary_img = cv2.threshold(img, 190, 255, cv2.THRESH_BINARY)
+    _, binary_img = cv2.threshold(img, 190, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
-    out_img = rlsa(binary_img, 10, 10)
+    hsv = vsv = 25
+    out_img = rlsa(binary_img, hsv, vsv)
 
     imgs = cv2.hconcat([binary_img, out_img])
     show_img(imgs, "Binary input image & Processed image")
