@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-from pathlib import Path
 
 import cv2
 import numpy as np
@@ -28,18 +27,17 @@ def show_img(img: np.ndarray, window_name: str = "Image"):
 
 def main():
     parser = ArgumentParser(description=("Script to test the RLSA module."))
-    parser.add_argument("img_path", type=Path, help="Path to the image to use.")
+    parser.add_argument("img_path", type=str, help="Path to the image to use.")
     args = parser.parse_args()
 
-    img_path: Path = args.img_path
+    img_path = args.img_path
 
-    img = cv2.imread(str(img_path), 0)
+    img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+    _, binary_img = cv2.threshold(img, 190, 255, cv2.THRESH_BINARY)
 
-    out_img = rlsa(img, 35, 35)
+    out_img = rlsa(binary_img, 10, 10)
 
-    out_img = out_img.astype(np.uint8)
-
-    show_img(img, "Input image")
+    show_img(binary_img, "Binary input image")
     show_img(out_img, "Processed image")
 
 

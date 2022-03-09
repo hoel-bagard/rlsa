@@ -17,15 +17,10 @@
  *     img:
  *     dims: Number of rows and columns in the image.
  *     value:
- *
- * Returns:
- *    An int array, the resulting image.
  */
-static int* rlsa(int* in_img, npy_intp* dims, int value) {  // _horizontal
+static void rlsa(int* img, npy_intp* dims, int value) {  // _horizontal
   long int rows = dims[0];
   long int cols = dims[1];
-  int out_img[rows * cols];
-  memcpy(out_img, in_img, sizeof(out_img));
 
   /* for(int i = 0; i < rows; i++) { */
   /*   for(int j = 0; j < cols; j++) { */
@@ -39,15 +34,14 @@ static int* rlsa(int* in_img, npy_intp* dims, int value) {  // _horizontal
   for(int i = 0; i < rows; i++) {
     int count = 0;  // Index of the last 0 found
     for(int j = 0; j < cols; j++) {
-      if (out_img[i*cols + j] == 0) {
+      if (img[i*cols + j] == 0) {
         if (j-count <= value)
           for(int k = count; k < j; k++)
-            out_img[i*cols + k] = 0;
+            img[i*cols + k] = 0;
         count = j;
       }
     }
   }
-  return out_img;
 }
 
 
@@ -75,7 +69,6 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
   int debug = 1;
   PyArrayObject* in_img = NULL;
   int vsv, hsv;
-  int* out_data = NULL;
 
   import_array();
   import_umath();
@@ -96,11 +89,17 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
   }
 
   /* out_data = in_data; */
-  out_data = rlsa(in_data, dims, hsv);
-  printf("AAAAAAAA %d", out_data[0]);
+
+  /* int out_data[dims[0] * dims[1]]; */
+  /* memcpy(out_data, in_img, sizeof(out_data)); */
+  int* out_data = (int*)malloc(dims[0] * dims[1] * sizeof(int));
+  memcpy(out_data, in_data, dims[0] * dims[1] * sizeof(int));
+  rlsa(out_data, dims, hsv);
+
   // create a python numpy array from the out array
-  PyArrayObject* output = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_INT32, (void*)out_data);  // TODO: Should be UINT8, but not working. byte ?
-  return PyArray_Return(output);
+  PyArrayObject* out_img = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_INT32, out_data);
+  out_img = (PyArrayObject*) PyArray_Cast(out_img, NPY_UINT8);
+  return PyArray_Return(out_img);
 
   /* If an error occurs goto fail. */
 
