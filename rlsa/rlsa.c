@@ -12,11 +12,11 @@
  * This function eliminates horizontal white runs whose lengths are smaller than the given value.
  *
  * Args:
- *     img:
+ *     img: Image on which to apply the rlsa horizontal process (gets modified).
  *     dims: Number of rows and columns in the image.
- *     value:
+ *     hsv: The treshold smoothing value.
  */
-static void rlsa_horizontal(uint8_t* img, npy_intp* dims, int value) {
+static void rlsa_horizontal(uint8_t* img, npy_intp* dims, int hsv) {
   long int rows = dims[0];
   long int cols = dims[1];
 
@@ -24,7 +24,7 @@ static void rlsa_horizontal(uint8_t* img, npy_intp* dims, int value) {
     int count = 0;  // Index of the last 0 found
     for(int j = 0; j < cols; j++) {
       if (img[i*cols + j] == 0) {
-        if (j-count <= value && count != 0)   // count != 0 is to avoid linking borders to the text.
+        if (j-count <= hsv && count != 0)   // count != 0 is to avoid linking borders to the text.
           for(int k = count; k < j; k++)
             img[i*cols + k] = 0;
         count = j;
@@ -36,7 +36,7 @@ static void rlsa_horizontal(uint8_t* img, npy_intp* dims, int value) {
 /**
  * Same as above, but vertically.
  */
-static void rlsa_vertical(uint8_t* img, npy_intp* dims, int value) {
+static void rlsa_vertical(uint8_t* img, npy_intp* dims, int vsv) {
   long int rows = dims[0];
   long int cols = dims[1];
 
@@ -44,7 +44,7 @@ static void rlsa_vertical(uint8_t* img, npy_intp* dims, int value) {
     int count = 0;
     for(int i = 0; i < rows; i++)
       if (img[i*cols + j] == 0) {
-        if (i-count <= value && count != 0)
+        if (i-count <= vsv && count != 0)
           for(int k = count; k < i; k++)
             img[k*cols + j] = 0;
         count = i;
@@ -52,32 +52,22 @@ static void rlsa_vertical(uint8_t* img, npy_intp* dims, int value) {
   }
 }
 
+/**
+ * Apply the Run Length Smoothing Algorithm on the given image.
+ *
+ * Args:
+ *     img: Image on which to apply the rlsa process (gets modified).
+ *     dims: Number of rows and columns in the image.
+ *     hsv: The horizontal treshold smoothing value.
+ *     vsv: The vertical treshold smoothing value.
+ */
 
 static void rlsa(uint8_t* img, npy_intp* dims, int hsv, int vsv) {
-  int ahsv = hsv / 2;  // TODO: Is it possible to have it as an optional arg ?
+  int ahsv = hsv / 10;  // TODO: Is it possible to have it as an optional arg ?
   rlsa_horizontal(img, dims, hsv);
   rlsa_vertical(img, dims, vsv);
   rlsa_horizontal(img, dims, ahsv);
 }
-
-/* def rlsa(img: np.ndarray, value_horizontal: int, value_vertical: int, ahsv: Optional[int] = None) -> np.ndarray: */
-/* """Run Length Smoothing Algorithm. */
-
-/*   Args: */
-/* img (np.ndarray): The image to process. */
-/*   value_horizontal (int): The horizontal threshold (hsv=300 in the paper) */
-/*   value_vertical (int): The vertical threshold (vsv=500 in the paper) */
-
-/*   Returns: */
-/* The resulting image. */
-/*   """ */
-/*   horizontal_rlsa = rlsa_horizontal(img, value_horizontal) */
-/*   vertical_rlsa = rlsa_horizontal(img.T, value_vertical).T */
-/*   combined_result = cv2.bitwise_and(horizontal_rlsa, vertical_rlsa) */
-/*   rlsa_result = rlsa_horizontal(combined_result, ahsv if ahsv else value_horizontal // 10) */
-/*                                                                       return rlsa_result */
-
-
 
 
 static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
