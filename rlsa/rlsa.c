@@ -11,31 +11,20 @@
  * Apply the RLS algorithm horizontally on the given image.
  * This function eliminates horizontal white runs whose lengths are smaller than the given value.
  *
- * Note: This function can be used to do the operation vertically by simply passing the transpose.
- *
  * Args:
  *     img:
  *     dims: Number of rows and columns in the image.
  *     value:
  */
-static void rlsa(int* img, npy_intp* dims, int value) {  // _horizontal
+static void rlsa_horizontal(int* img, npy_intp* dims, int value) {
   long int rows = dims[0];
   long int cols = dims[1];
-
-  /* for(int i = 0; i < rows; i++) { */
-  /*   for(int j = 0; j < cols; j++) { */
-  /*     if (in_img[i*cols + j] != out_img[i*cols + j]) { */
-  /*       printf("In: %d\n", in_img[i*cols + j]); */
-  /*       printf("Out: %d\n", out_img[i*cols + j]); */
-  /*     } */
-  /*   } */
-  /* } */
 
   for(int i = 0; i < rows; i++) {
     int count = 0;  // Index of the last 0 found
     for(int j = 0; j < cols; j++) {
       if (img[i*cols + j] == 0) {
-        if (j-count <= value)
+        if (j-count <= value && count != 0)   // count != 0 is to avoid linking borders to the text.
           for(int k = count; k < j; k++)
             img[i*cols + k] = 0;
         count = j;
@@ -44,6 +33,32 @@ static void rlsa(int* img, npy_intp* dims, int value) {  // _horizontal
   }
 }
 
+/**
+ * Same as above, but vertically.
+ */
+static void rlsa_vertical(int* img, npy_intp* dims, int value) {
+  long int rows = dims[0];
+  long int cols = dims[1];
+
+  for(int j = 0; j < cols; j++) {
+    int count = 0;
+    for(int i = 0; i < rows; i++)
+      if (img[i*cols + j] == 0) {
+        if (i-count <= value && count != 0)
+          for(int k = count; k < i; k++)
+            img[k*cols + j] = 0;
+        count = i;
+      }
+  }
+}
+
+
+static void rlsa(int* img, npy_intp* dims, int hsv, int vsv) {
+  int ahsv = hsv / 2;
+  rlsa_horizontal(img, dims, hsv);
+  rlsa_vertical(img, dims, vsv);
+  rlsa_horizontal(img, dims, ahsv);
+}
 
 /* def rlsa(img: np.ndarray, value_horizontal: int, value_vertical: int, ahsv: Optional[int] = None) -> np.ndarray: */
 /* """Run Length Smoothing Algorithm. */
@@ -67,11 +82,12 @@ static void rlsa(int* img, npy_intp* dims, int value) {  // _horizontal
 
 static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
   int debug = 1;
-  PyArrayObject* in_img = NULL;
-  int vsv, hsv;
 
   import_array();
   import_umath();
+
+  PyArrayObject* in_img = NULL;
+  int vsv, hsv;
 
   if (!PyArg_ParseTuple(args, "Oii", &in_img, &vsv, &hsv))
     return NULL;
@@ -88,13 +104,11 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
     printf("First int is %d\n", in_data[0]);
   }
 
-  /* out_data = in_data; */
-
-  /* int out_data[dims[0] * dims[1]]; */
-  /* memcpy(out_data, in_img, sizeof(out_data)); */
-  int* out_data = (int*)malloc(dims[0] * dims[1] * sizeof(int));
+  // Copy the input image data to an output image (that we will modify from now on).
+  int* out_data = (int*)malloc(dims[0] * dims[1] * sizeof(int));  // Needs to be a malloc to keep the data when returning the array to python
   memcpy(out_data, in_data, dims[0] * dims[1] * sizeof(int));
-  rlsa(out_data, dims, hsv);
+
+  rlsa(out_data, dims, hsv, vsv);
 
   // create a python numpy array from the out array
   PyArrayObject* out_img = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_INT32, out_data);
@@ -115,15 +129,15 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
 
 static PyMethodDef RLSAMethods[] = {
   {"rlsa",  rlsa_wrapper, METH_VARARGS, "Applies the Run Length Smoothing Algorithm on an image."},
-  {NULL, NULL, 0, NULL}        /* Sentinel */
+  {NULL, NULL, 0, NULL}  /* Sentinel */
 };
 
 
 static struct PyModuleDef rlsa_module = {
   PyModuleDef_HEAD_INIT,
-  "rlsa",   /* name of module */
-  "Run Length Smoothing Algorithm package.",
-  -1,       /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+  "rlsa",   /* Name of module */
+  "Run Length Smoothing Algorithm package.",  // Module description.
+  -1,       /* Size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
   RLSAMethods
 };
 

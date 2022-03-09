@@ -37,8 +37,8 @@ def main():
 
     out_img = rlsa(binary_img, 10, 10)
 
-    show_img(binary_img, "Binary input image")
-    show_img(out_img, "Processed image")
+    imgs = cv2.hconcat([binary_img, out_img])
+    show_img(imgs, "Binary input image & Processed image")
 
 
 if __name__ == "__main__":
