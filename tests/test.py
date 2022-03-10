@@ -37,17 +37,18 @@ def main():
     img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
     _, binary_img = cv2.threshold(img, 190, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
-    # hsv = vsv = 25
-    hsv, vsv = 25, 0
+    hsv = vsv = 25
+    # hsv, vsv = 25, 0
     out_img_c = rlsa(binary_img, hsv, vsv)
     out_img_python = python_rlsa(binary_img, hsv, vsv)
 
     imgs = cv2.hconcat([binary_img, out_img_c, out_img_python])
     show_img(imgs, "Binary input image & Processed image & Python processed image")
 
-    print(np.sum(out_img_c != out_img_python))
+    diff = np.sum(out_img_c != out_img_python)
+    assert diff == 0, f"Python and C results differ for {diff} pixels."
 
-    # assert (out_img_c == out_img_python).all(), "Python and C results differ."
+    print("Works fine!")
 
 
 if __name__ == "__main__":

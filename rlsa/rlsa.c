@@ -82,7 +82,7 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
   PyArrayObject* in_img = NULL;
   int vsv, hsv;
 
-  if (!PyArg_ParseTuple(args, "Oii", &in_img, &vsv, &hsv))
+  if (!PyArg_ParseTuple(args, "Oii", &in_img, &hsv, &vsv))
     return NULL;
 
   in_img = (PyArrayObject*) PyArray_Cast(in_img, NPY_UINT8);
@@ -92,8 +92,7 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
   uint8_t* in_data = (uint8_t*)PyArray_DATA(in_img);  // Pointer to data.
 
   // Copy the input image data to an output image (that we will modify from now on).
-  // uint8_t* out_data = (uint8_t*)malloc(dims[0] * dims[1] * sizeof(uint8_t));
-  uint8_t out_data[dims[0] * dims[1]];
+  uint8_t* out_data = (uint8_t*)malloc(dims[0] * dims[1] * sizeof(uint8_t));  // uint8_t out_data[dims[0] * dims[1]];
   memcpy(out_data, in_data, dims[0] * dims[1] * sizeof(uint8_t));
 
   rlsa(out_data, dims, hsv, vsv);
@@ -101,7 +100,7 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
   // create a python numpy array from the out array
   PyArrayObject* out_img = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_UINT8, out_data);
 
-  Py_DECREF(in_img);  // TODO: should it be done for vsv and hsv too ?
+  Py_DECREF(in_img);
 
   return PyArray_Return(out_img);
 }
