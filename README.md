@@ -29,7 +29,14 @@ out_img = rlsa(binary_img, hsv, vsv)
 ```
 
 ### Results
-TODO
+| Input image | After RLSA |
+|    :---:      |     :---:     |
+| ![Input](/assets/rlsa_test_image.jpg?raw "Output sample") | ![Output](/assets/rlsa_out.jpg?raw "Output sample") |
+
+| Horizontal only | Vertical only |
+|    :---:      |     :---:     |
+| ![Horizontal](/assets/rlsa_out_hor_only.jpg?raw "Horizontal output sample") | ![Vertical](/assets/rlsa_out_vert_only.jpg?raw "Vertical output sample") |
+
 
 ## Included scripts
 
