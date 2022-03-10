@@ -100,7 +100,7 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
   // create a python numpy array from the out array
   PyArrayObject* out_img = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_UINT8, out_data);
 
-  Py_DECREF(in_img);
+  /* Py_DECREF(in_img); */
 
   return PyArray_Return(out_img);
 }

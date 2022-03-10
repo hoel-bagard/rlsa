@@ -12,6 +12,7 @@ build/
 
 # Distribution / packaging
 dist/
+output/
 *.egg-info/
 
 # Output

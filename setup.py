@@ -1,6 +1,7 @@
+import numpy as np
 import setuptools
 
-rlsa_module = setuptools.Extension("rlsa", sources=["rlsa/rlsa.c"])
+rlsa_module = setuptools.Extension("rlsa", sources=["rlsa/rlsa.c"], include_dirs=[np.get_include()])
 
 
 setuptools.setup(
