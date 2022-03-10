@@ -1,8 +1,6 @@
-import numpy as np
 import setuptools
 
-
-rlsa_module = setuptools.Extension("rlsa", sources=["rlsa/rlsa.c"], include_dirs=[np.get_include()])
+rlsa_module = setuptools.Extension("rlsa", sources=["rlsa/rlsa.c"])
 
 
 setuptools.setup(
@@ -22,17 +20,3 @@ setuptools.setup(
     include_package_data=True,
     python_requires=">=3.8",
 )
-
-
-# def configuration(parent_package='', top_path=None):
-#     from numpy.distutils.misc_util import Configuration
-
-#     config = Configuration()
-#     config.add_extension("rlsa", ["rlsa/rlsa.c"])
-
-#     return config
-
-
-# if __name__ == "__main__":
-#     from numpy.distutils.core import setup
-#     setup(configuration=configuration)
