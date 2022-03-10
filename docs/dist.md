@@ -4,13 +4,13 @@ If you want to install the package locally to test changes, you can use (from vi
 python setup.py install
 ```
 ## PyPI
-### Uncompiled version
+### Source Distribution
 #### Create the tar file
 ```
 python setup.py sdist
 ```
 
-### Compiled version
+### Built Distributions
 #### Create the docker
 Assuming you are in the repo's folder, enter the manylinux docker with:
 ```
