@@ -58,7 +58,7 @@ static void rlsa_vertical(uint8_t* img, long int rows, long int cols, int vsv) {
 static void rlsa(uint8_t* img, npy_intp* dims, int hsv, int vsv) {
   long int rows = dims[0];
   long int cols = dims[1];
-  int ahsv = hsv / 10;  // TODO: Is it possible to have it as an optional arg ?
+  int ahsv = hsv / 10;  // TODO: Make it an "optional" arg ?
 
   uint8_t horizontal_rlsa_img[rows * cols];
   memcpy(horizontal_rlsa_img, img, sizeof(horizontal_rlsa_img));
