@@ -3,7 +3,7 @@ C implementation of [RLSA](https://users.iit.demokritos.gr/~bgat/RLSA_values.pdf
 
 ## Usage
 ### Requirements
-- python version >= 3.8
+- Python: 3.8+
 
 ### Install
 Install with:
@@ -31,7 +31,7 @@ hsv = vsv = 25
 out_img = rlsa(binary_img, hsv, vsv, hsv//10)
 ```
 
-With a similar setup, the other functions can be used like so:
+With a similar setup, the other functions can be used like this:
 ```
 out_img = rlsa_horizontal(binary_img, hsv)
 out_img = rlsa_vertical(binary_img, vsv)
@@ -66,4 +66,4 @@ python -m tests.benchmark assets/rlsa_test_image.jpg
 
 
 #### Misc
-Note: the numpy tutorial/doc [here](https://numpy.org/doc/stable/user/c-info.how-to-extend.html) is (it seems) outdated (be carefull when using it).
+Note to self: the numpy tutorial/doc [here](https://numpy.org/doc/stable/user/c-info.how-to-extend.html) is (it seems) outdated (be carefull when using it).
