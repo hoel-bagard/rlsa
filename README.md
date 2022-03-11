@@ -12,11 +12,14 @@ pip install rlsa
 ```
 
 ### Usage
-The only function currently exported is `rlsa`.\
-It takes as input a black and white image (as a uint8 numpy array), and the hvs and vsv values (for now the ahsv is fixed as `hsv // 10`).\
+The main function is `rlsa`.\
+It takes as input a black and white image (as a uint8 numpy array), and the hvs, vsv and ahvs values.
 The function returns a new black and white image, leaving the original one intact.
 
+You can also import the `rlsa_horizontal` and `rlsa_vertical` functions to apply only one of the RLSA components.
+
 ### Usage example
+A full example would be:
 ```
 import cv2
 from rlsa import rlsa
@@ -25,7 +28,13 @@ img = cv2.imread("assets/rlsa_test_image.jpg", cv2.IMREAD_GRAYSCALE)
 _, binary_img = cv2.threshold(img, 190, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
 hsv = vsv = 25
-out_img = rlsa(binary_img, hsv, vsv)
+out_img = rlsa(binary_img, hsv, vsv, hsv//10)
+```
+
+With a similar setup, the other functions can be used like so:
+```
+out_img = rlsa_horizontal(binary_img, hsv)
+out_img = rlsa_vertical(binary_img, vsv)
 ```
 
 ### Results

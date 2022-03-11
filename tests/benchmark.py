@@ -22,7 +22,7 @@ def main():
     nb_iterations = 10  # Python is super slow, so keep that one low.
     start_time = time.perf_counter()  # Could use timeit, but I'm lazy.
     for _ in range(nb_iterations):
-        _ = rlsa(binary_img, hsv, vsv)
+        _ = rlsa(binary_img, hsv, vsv, hsv//10)
     end_time = time.perf_counter()
     c_time = (end_time - start_time) / nb_iterations
 
