@@ -38,7 +38,7 @@ def main():
     _, binary_img = cv2.threshold(img, 190, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
     hsv = vsv = 25
-    out_img_c = rlsa(binary_img, hsv, vsv)
+    out_img_c = rlsa(binary_img, hsv, vsv, hsv//10)
     out_img_python = python_rlsa(binary_img, hsv, vsv)
 
     imgs = cv2.hconcat([binary_img, out_img_c, out_img_python])

@@ -54,11 +54,9 @@ static void rlsa_vertical(uint8_t* img, long int rows, long int cols, int vsv) {
  *     hsv: The horizontal treshold smoothing value.
  *     vsv: The vertical treshold smoothing value.
  */
-
-static void rlsa(uint8_t* img, npy_intp* dims, int hsv, int vsv) {
+static void rlsa(uint8_t* img, npy_intp* dims, int hsv, int vsv, int ahsv ) {
   long int rows = dims[0];
   long int cols = dims[1];
-  int ahsv = hsv / 10;  // TODO: Make it an "optional" arg ?
 
   uint8_t horizontal_rlsa_img[rows * cols];
   memcpy(horizontal_rlsa_img, img, sizeof(horizontal_rlsa_img));
@@ -80,14 +78,15 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
   import_umath();
 
   PyArrayObject* in_img = NULL;
-  int vsv, hsv;
+  int vsv, hsv, ahsv;
 
-  if (!PyArg_ParseTuple(args, "Oii", &in_img, &hsv, &vsv))
+  if (!PyArg_ParseTuple(args, "Oiii", &in_img, &hsv, &vsv, &ahsv))
     return NULL;
 
   in_img = (PyArrayObject*) PyArray_Cast(in_img, NPY_UINT8);
 
-  /* int nb_dims = PyArray_NDIM(in_img);  // number of dimensions */
+  int nb_dims = PyArray_NDIM(in_img);  // number of dimensions
+  if (nb_dims != 2) PyErr_SetString(PyExc_ValueError, "Numpy array must be 2D.");
   npy_intp* dims = PyArray_DIMS(in_img);  // npy_intp array of length nb_dims showing length in each dim.
   uint8_t* in_data = (uint8_t*)PyArray_DATA(in_img);  // Pointer to data.
 
@@ -95,7 +94,7 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
   uint8_t* out_data = (uint8_t*)malloc(dims[0] * dims[1] * sizeof(uint8_t));  // uint8_t out_data[dims[0] * dims[1]];
   memcpy(out_data, in_data, dims[0] * dims[1] * sizeof(uint8_t));
 
-  rlsa(out_data, dims, hsv, vsv);
+  rlsa(out_data, dims, hsv, vsv, ahsv);
 
   // create a python numpy array from the out array
   PyArrayObject* out_img = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_UINT8, out_data);
@@ -106,8 +105,70 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
 }
 
 
+static PyObject *rlsa_wrapper_horizontal(PyObject *self, PyObject *args) {
+  import_array();
+  import_umath();
+
+  PyArrayObject* in_img = NULL;
+  int hsv;
+
+  if (!PyArg_ParseTuple(args, "Oi", &in_img, &hsv))
+    return NULL;
+
+  in_img = (PyArrayObject*) PyArray_Cast(in_img, NPY_UINT8);
+
+  int nb_dims = PyArray_NDIM(in_img);  // number of dimensions
+  if (nb_dims != 2) PyErr_SetString(PyExc_ValueError, "Numpy array must be 2D.");
+  npy_intp* dims = PyArray_DIMS(in_img);  // npy_intp array of length nb_dims showing length in each dim.
+  uint8_t* in_data = (uint8_t*)PyArray_DATA(in_img);  // Pointer to data.
+
+  // Copy the input image data to an output image (that we will modify from now on).
+  uint8_t* out_data = (uint8_t*)malloc(dims[0] * dims[1] * sizeof(uint8_t));  // uint8_t out_data[dims[0] * dims[1]];
+  memcpy(out_data, in_data, dims[0] * dims[1] * sizeof(uint8_t));
+
+  rlsa_horizontal(out_data, dims[0], dims[1], hsv);
+
+  // create a python numpy array from the out array
+  PyArrayObject* out_img = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_UINT8, out_data);
+
+  return PyArray_Return(out_img);
+}
+
+
+static PyObject *rlsa_wrapper_vertical(PyObject *self, PyObject *args) {
+  import_array();
+  import_umath();
+
+  PyArrayObject* in_img = NULL;
+  int vsv;
+
+  if (!PyArg_ParseTuple(args, "Oi", &in_img, &vsv))
+    return NULL;
+
+  in_img = (PyArrayObject*) PyArray_Cast(in_img, NPY_UINT8);
+
+  int nb_dims = PyArray_NDIM(in_img);  // number of dimensions
+  if (nb_dims != 2) PyErr_SetString(PyExc_ValueError, "Numpy array must be 2D.");
+  npy_intp* dims = PyArray_DIMS(in_img);  // npy_intp array of length nb_dims showing length in each dim.
+  uint8_t* in_data = (uint8_t*)PyArray_DATA(in_img);  // Pointer to data.
+
+  // Copy the input image data to an output image (that we will modify from now on).
+  uint8_t* out_data = (uint8_t*)malloc(dims[0] * dims[1] * sizeof(uint8_t));  // uint8_t out_data[dims[0] * dims[1]];
+  memcpy(out_data, in_data, dims[0] * dims[1] * sizeof(uint8_t));
+
+  rlsa_vertical(out_data, dims[0], dims[1], vsv);
+
+  // create a python numpy array from the out array
+  PyArrayObject* out_img = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_UINT8, out_data);
+
+  return PyArray_Return(out_img);
+}
+
+
 static PyMethodDef RLSAMethods[] = {
   {"rlsa",  rlsa_wrapper, METH_VARARGS, "Applies the Run Length Smoothing Algorithm on an image."},
+  {"rlsa_horizontal",  rlsa_wrapper_horizontal, METH_VARARGS, "Applies the horizontal component of RLSA on an image."},
+  {"rlsa_vertical",  rlsa_wrapper_vertical, METH_VARARGS, "Applies the vertical component of RLSA on an image."},
   {NULL, NULL, 0, NULL}  /* Sentinel */
 };
 
