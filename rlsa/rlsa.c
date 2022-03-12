@@ -17,13 +17,13 @@
  */
 static void rlsa_horizontal(uint8_t* img, long int rows, long int cols, int hsv) {
   for(int i = 0; i < rows; i++) {
-    int count = 0;  // Index of the last 0 found
+    int last_black_px = 0;  // Index of the last 0 found
     for(int j = 0; j < cols; j++) {
       if (img[i*cols + j] == 0) {
-        if (j-count <= hsv && count != 0)   // count != 0 is to avoid linking borders to the text.
-          for(int k = count; k < j; k++)
+        if (j-last_black_px <= hsv && last_black_px != 0)   // last_black_px != 0 is to avoid linking borders to the text.
+          for(int k = last_black_px; k < j; k++)
             img[i*cols + k] = 0;
-        count = j;
+        last_black_px = j;
       }
     }
   }
@@ -34,13 +34,13 @@ static void rlsa_horizontal(uint8_t* img, long int rows, long int cols, int hsv)
  */
 static void rlsa_vertical(uint8_t* img, long int rows, long int cols, int vsv) {
   for(int j = 0; j < cols; j++) {
-    int count = 0;
+    int last_black_px = 0;
     for(int i = 0; i < rows; i++)
       if (img[i*cols + j] == 0) {
-        if (i-count <= vsv && count != 0)
-          for(int k = count; k < i; k++)
+        if (i-last_black_px <= vsv && last_black_px != 0)
+          for(int k = last_black_px; k < i; k++)
             img[k*cols + j] = 0;
-        count = i;
+        last_black_px = i;
       }
   }
 }
