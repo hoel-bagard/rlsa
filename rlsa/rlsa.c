@@ -165,10 +165,66 @@ static PyObject *rlsa_wrapper_vertical(PyObject *self, PyObject *args) {
 }
 
 
+PyDoc_STRVAR(rlsa_doc,
+             "rlsa(binary_img, hsv, vsv, ahsv, /)\n"
+             "--\n\n"
+             "Applies the Run Length Smoothing Algorithm on an image.\n"
+             "\n"
+             "Args:\n"
+             "    binary_img (npt.NDArray[np.uint8]): The black and white input image.\n"
+             "    hsv (int): The horizontal threshold, i.e., the number of white pixels needed to 'separate' two black pixels.\n"
+             "    vsv (int): The vertical threshold.\n"
+             "    ahsv (int): Second horizontal threshold, for the (optional) second horizontal pass.\n"
+             "\n"
+             "Returns:\n"
+             "    out_img (npt.NDArray[np.uint8]): New image with the rlsa applied on it.\n"
+             "\n"
+             "Example:\n"
+             "    >>> img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)\n"
+             "    >>> _, binary_img = cv2.threshold(img, 190, 255, cv2.THRESH_BINARY)\n"
+             "    >>> out_img = rlsa(binary_img, 25, 25, 3)\n"
+             );
+
+PyDoc_STRVAR(rlsa_horizontal_doc,
+             "rlsa_horizontal(binary_img, hsv, /)\n"
+             "--\n\n"
+             "Applies the horizontal component of RLSA on an image.\n"
+             "\n"
+             "Args:\n"
+             "    binary_img (npt.NDArray[np.uint8]): The black and white input image.\n"
+             "    hsv (int): The horizontal threshold, i.e., the number of white pixels needed to 'separate' two black pixels.\n"
+             "\n"
+             "Returns:\n"
+             "    out_img (npt.NDArray[np.uint8]): New image with the horizontal rlsa applied on it.\n"
+             "\n"
+             "Example:\n"
+             "    >>> img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)\n"
+             "    >>> _, binary_img = cv2.threshold(img, 190, 255, cv2.THRESH_BINARY)\n"
+             "    >>> out_img = rlsa_horizontal(binary_img, 25)\n"
+             );
+
+PyDoc_STRVAR(rlsa_vertical_doc,
+             "rlsa_vertical(binary_img, vsv, /)\n"
+             "--\n\n"
+             "Applies the vertical component of RLSA on an image.\n"
+             "\n"
+             "Args:\n"
+             "    binary_img (npt.NDArray[np.uint8]): The black and white input image.\n"
+             "    vsv (int): The vertical threshold, i.e., the number of white pixels needed to 'separate' two black pixels.\n"
+             "\n"
+             "Returns:\n"
+             "    out_img (npt.NDArray[np.uint8]): New image with the vertical rlsa applied on it.\n"
+             "\n"
+             "Example:\n"
+             "    >>> img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)\n"
+             "    >>> _, binary_img = cv2.threshold(img, 190, 255, cv2.THRESH_BINARY)\n"
+             "    >>> out_img = rlsa_vertical(binary_img, 25)\n"
+             );
+
 static PyMethodDef RLSAMethods[] = {
-  {"rlsa",  rlsa_wrapper, METH_VARARGS, "Applies the Run Length Smoothing Algorithm on an image."},
-  {"rlsa_horizontal",  rlsa_wrapper_horizontal, METH_VARARGS, "Applies the horizontal component of RLSA on an image."},
-  {"rlsa_vertical",  rlsa_wrapper_vertical, METH_VARARGS, "Applies the vertical component of RLSA on an image."},
+  {"rlsa",  rlsa_wrapper, METH_VARARGS, rlsa_doc},
+  {"rlsa_horizontal",  rlsa_wrapper_horizontal, METH_VARARGS, rlsa_horizontal_doc},
+  {"rlsa_vertical",  rlsa_wrapper_vertical, METH_VARARGS, rlsa_vertical_doc},
   {NULL, NULL, 0, NULL}  /* Sentinel */
 };
 
