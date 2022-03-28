@@ -62,8 +62,3 @@ python -m tests.test assets/rlsa_test_image.jpg
 python -m tests.benchmark assets/rlsa_test_image.jpg
 ```
 --> C version is around 400 times faster than the naive python one.
-
-
-
-#### Misc
-Note to self: the numpy tutorial/doc [here](https://numpy.org/doc/stable/user/c-info.how-to-extend.html) is (it seems) outdated (be carefull when using it).

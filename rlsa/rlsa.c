@@ -86,6 +86,12 @@ static PyArrayObject *rlsa_wrapper(PyObject *self, PyObject *args, PyObject *kwa
   ahsv = 0;
   if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Oii|i", kwlist, &in_img, &hsv, &vsv, &ahsv))
     goto except;
+  if (!PyArray_Check(in_img)) {
+    PyErr_Format(PyExc_TypeError,
+                 "Argument \"in_img\" to %s must be a numpy array object not a \"%s\"",
+                 __FUNCTION__, Py_TYPE(in_img)->tp_name);
+    goto except;
+  }
 
   in_img = (PyArrayObject*) PyArray_Cast(in_img, NPY_UINT8);
 
@@ -104,18 +110,19 @@ static PyArrayObject *rlsa_wrapper(PyObject *self, PyObject *args, PyObject *kwa
   out_img = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_UINT8, out_data);
   PyArray_ENABLEFLAGS(out_img, NPY_ARRAY_OWNDATA);  // To free memory as soon as the ndarray is deallocated.
 
-  assert(!PyErr_Occurred());
+  assert(!PyErr_Occurred());  /* Alternative check: if(PyErr_Occurred()) goto except; */
   assert(out_img);
   goto finally;
  except:
   Py_XDECREF(out_img);
+  assert(PyErr_Occurred());
   out_img = NULL;
  finally:
   return out_img;
 }
 
 
-static PyObject *rlsa_wrapper_horizontal(PyObject *self, PyObject *args) {
+static PyArrayObject *rlsa_wrapper_horizontal(PyObject *self, PyObject *args) {
   import_array();
   import_umath();
 
@@ -124,6 +131,12 @@ static PyObject *rlsa_wrapper_horizontal(PyObject *self, PyObject *args) {
 
   if (!PyArg_ParseTuple(args, "Oi", &in_img, &hsv))
     return NULL;
+  if (!PyArray_Check(in_img)) {
+    PyErr_Format(PyExc_TypeError,
+                 "Argument \"in_img\" to %s must be a numpy array object not a \"%s\"",
+                 __FUNCTION__, Py_TYPE(in_img)->tp_name);
+    goto except;
+  }
 
   in_img = (PyArrayObject*) PyArray_Cast(in_img, NPY_UINT8);
 
@@ -141,11 +154,19 @@ static PyObject *rlsa_wrapper_horizontal(PyObject *self, PyObject *args) {
   // create a python numpy array from the out array
   PyArrayObject* out_img = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_UINT8, out_data);
 
-  return PyArray_Return(out_img);
+  assert(!PyErr_Occurred());
+  assert(out_img);
+  goto finally;
+ except:
+  Py_XDECREF(out_img);
+  assert(PyErr_Occurred());
+  out_img = NULL;
+ finally:
+  return out_img;
 }
 
 
-static PyObject *rlsa_wrapper_vertical(PyObject *self, PyObject *args) {
+static PyArrayObject *rlsa_wrapper_vertical(PyObject *self, PyObject *args) {
   import_array();
   import_umath();
 
@@ -154,6 +175,12 @@ static PyObject *rlsa_wrapper_vertical(PyObject *self, PyObject *args) {
 
   if (!PyArg_ParseTuple(args, "Oi", &in_img, &vsv))
     return NULL;
+  if (!PyArray_Check(in_img)) {
+    PyErr_Format(PyExc_TypeError,
+                 "Argument \"in_img\" to %s must be a numpy array object not a \"%s\"",
+                 __FUNCTION__, Py_TYPE(in_img)->tp_name);
+    goto except;
+  }
 
   in_img = (PyArrayObject*) PyArray_Cast(in_img, NPY_UINT8);
 
@@ -171,7 +198,15 @@ static PyObject *rlsa_wrapper_vertical(PyObject *self, PyObject *args) {
   // create a python numpy array from the out array
   PyArrayObject* out_img = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_UINT8, out_data);
 
-  return PyArray_Return(out_img);
+  assert(!PyErr_Occurred());
+  assert(out_img);
+  goto finally;
+ except:
+  Py_XDECREF(out_img);
+  assert(PyErr_Occurred());
+  out_img = NULL;
+ finally:
+  return out_img;
 }
 
 
