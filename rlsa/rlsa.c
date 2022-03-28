@@ -53,35 +53,39 @@ static void rlsa_vertical(uint8_t* img, long int rows, long int cols, int vsv) {
  *     dims: Number of rows and columns in the image.
  *     hsv: The horizontal treshold smoothing value.
  *     vsv: The vertical treshold smoothing value.
+ *     ahsv: Second horizontal threshold, for the (optional) second horizontal pass.
  */
-static void rlsa(uint8_t* img, npy_intp* dims, int hsv, int vsv, int ahsv ) {
+static void rlsa(uint8_t* img, npy_intp* dims, int hsv, int vsv, int ahsv) {
   long int rows = dims[0];
   long int cols = dims[1];
 
   uint8_t horizontal_rlsa_img[rows * cols];
   memcpy(horizontal_rlsa_img, img, sizeof(horizontal_rlsa_img));
-  rlsa_horizontal(horizontal_rlsa_img, rows, cols, hsv);
-  rlsa_vertical(img, rows, cols, vsv);
+  if (hsv != 0) rlsa_horizontal(horizontal_rlsa_img, rows, cols, hsv);
+  if (vsv != 0) rlsa_vertical(img, rows, cols, vsv);
 
-  // And operation between the vetical and horizontal results.
+  // AND operation between the vetical and horizontal results.
   for(int i = 0; i < rows; i++)
     for(int j = 0; j < cols; j++)
       if (img[i*cols + j] == 0 || horizontal_rlsa_img[i*cols + j] == 0)
         img[i*cols + j] = 0;
 
-  rlsa_horizontal(img, rows, cols, ahsv);
+  if (ahsv != 0) rlsa_horizontal(img, rows, cols, ahsv);
 }
 
 
-static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
+static PyArrayObject *rlsa_wrapper(PyObject *self, PyObject *args, PyObject *kwargs) {
   import_array();
   import_umath();
 
+  PyArrayObject* out_img = NULL;
   PyArrayObject* in_img = NULL;
   int vsv, hsv, ahsv;
+  static char *kwlist[] = {"in_img", "hsv", "vsv", "ahsv", NULL};
 
-  if (!PyArg_ParseTuple(args, "Oiii", &in_img, &hsv, &vsv, &ahsv))
-    return NULL;
+  ahsv = 0;
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Oii|i", kwlist, &in_img, &hsv, &vsv, &ahsv))
+    goto except;
 
   in_img = (PyArrayObject*) PyArray_Cast(in_img, NPY_UINT8);
 
@@ -97,11 +101,17 @@ static PyObject *rlsa_wrapper(PyObject *self, PyObject *args) {
   rlsa(out_data, dims, hsv, vsv, ahsv);
 
   // create a python numpy array from the out array
-  PyArrayObject* out_img = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_UINT8, out_data);
+  out_img = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, NPY_UINT8, out_data);
+  PyArray_ENABLEFLAGS(out_img, NPY_ARRAY_OWNDATA);  // To free memory as soon as the ndarray is deallocated.
 
-  /* Py_DECREF(in_img); */
-
-  return PyArray_Return(out_img);
+  assert(!PyErr_Occurred());
+  assert(out_img);
+  goto finally;
+ except:
+  Py_XDECREF(out_img);
+  out_img = NULL;
+ finally:
+  return out_img;
 }
 
 
@@ -166,12 +176,12 @@ static PyObject *rlsa_wrapper_vertical(PyObject *self, PyObject *args) {
 
 
 PyDoc_STRVAR(rlsa_doc,
-             "rlsa(binary_img, hsv, vsv, ahsv, /)\n"
+             "rlsa(img, hsv, vsv, ahsv=0, /)\n"
              "--\n\n"
              "Applies the Run Length Smoothing Algorithm on an image.\n"
              "\n"
              "Args:\n"
-             "    binary_img (npt.NDArray[np.uint8]): The black and white input image.\n"
+             "    in_img (npt.NDArray[np.uint8]): The black and white input image.\n"
              "    hsv (int): The horizontal threshold, i.e., the number of white pixels needed to 'separate' two black pixels.\n"
              "    vsv (int): The vertical threshold.\n"
              "    ahsv (int): Second horizontal threshold, for the (optional) second horizontal pass.\n"
@@ -186,12 +196,12 @@ PyDoc_STRVAR(rlsa_doc,
              );
 
 PyDoc_STRVAR(rlsa_horizontal_doc,
-             "rlsa_horizontal(binary_img, hsv, /)\n"
+             "rlsa_horizontal(in_img, hsv, /)\n"
              "--\n\n"
              "Applies the horizontal component of RLSA on an image.\n"
              "\n"
              "Args:\n"
-             "    binary_img (npt.NDArray[np.uint8]): The black and white input image.\n"
+             "    in_img (npt.NDArray[np.uint8]): The black and white input image.\n"
              "    hsv (int): The horizontal threshold, i.e., the number of white pixels needed to 'separate' two black pixels.\n"
              "\n"
              "Returns:\n"
@@ -204,12 +214,12 @@ PyDoc_STRVAR(rlsa_horizontal_doc,
              );
 
 PyDoc_STRVAR(rlsa_vertical_doc,
-             "rlsa_vertical(binary_img, vsv, /)\n"
+             "rlsa_vertical(in_img, vsv, /)\n"
              "--\n\n"
              "Applies the vertical component of RLSA on an image.\n"
              "\n"
              "Args:\n"
-             "    binary_img (npt.NDArray[np.uint8]): The black and white input image.\n"
+             "    in_img (npt.NDArray[np.uint8]): The black and white input image.\n"
              "    vsv (int): The vertical threshold, i.e., the number of white pixels needed to 'separate' two black pixels.\n"
              "\n"
              "Returns:\n"
@@ -222,7 +232,7 @@ PyDoc_STRVAR(rlsa_vertical_doc,
              );
 
 static PyMethodDef RLSAMethods[] = {
-  {"rlsa",  rlsa_wrapper, METH_VARARGS, rlsa_doc},
+  {"rlsa",  (PyCFunction)rlsa_wrapper, METH_VARARGS | METH_KEYWORDS, rlsa_doc},
   {"rlsa_horizontal",  rlsa_wrapper_horizontal, METH_VARARGS, rlsa_horizontal_doc},
   {"rlsa_vertical",  rlsa_wrapper_vertical, METH_VARARGS, rlsa_vertical_doc},
   {NULL, NULL, 0, NULL}  /* Sentinel */
