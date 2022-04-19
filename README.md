@@ -13,7 +13,7 @@ pip install rlsa
 
 ### Usage
 The main function is `rlsa`.\
-It takes as input a black and white image (as a uint8 numpy array), and the hvs, vsv and ahvs values.
+It takes as input a black and white image (as a uint8 numpy array), and the hvs, vsv and (optionally) ahvs values.
 The function returns a new black and white image, leaving the original one intact.
 
 You can also import the `rlsa_horizontal` and `rlsa_vertical` functions to apply only one of the RLSA components.
